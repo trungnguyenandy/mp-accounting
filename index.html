@@ -1,170 +1,97 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html>
 <head>
-    <meta charset="UTF-8">
+    <title>MPACCOUNTING - Embedded App</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ thống quản lý MPACCOUNTING</title>
     <style>
         body {
+            font-family: Arial, sans-serif;
             margin: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f8f9fa;
+            padding: 20px;
+            background: #f5f5f5;
         }
-        .header {
-            background: linear-gradient(135deg, #2c3e50, #3498db);
-            color: white;
-            padding: 1rem 2rem;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .logo {
-            font-weight: 700;
-            font-size: 1.5rem;
-        }
-        .app-container {
-            margin: 2rem auto;
-            max-width: 1200px;
-            padding: 0 1rem;
-        }
-        #appsheet-iframe {
-            width: 100%;
-            height: 75vh;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        .debug {
             background: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
         }
-        .loading {
-            text-align: center;
-            padding: 2rem;
-            font-size: 1.1rem;
-            color: #6c757d;
-        }
-        .error {
-            color: #dc3545;
-            text-align: center;
-            padding: 2rem;
-        }
-        .btn-refresh {
-            display: block;
-            margin: 1rem auto;
-            padding: 0.5rem 1rem;
-            background: #3498db;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
+        #appframe {
+            width: 100%;
+            height: 80vh;
+            border: 1px solid #3498db;
+            border-radius: 5px;
+            background: white;
         }
     </style>
 </head>
 <body>
-    <!-- Header -->
-    <div class="header">
-        <div class="logo">MPACCOUNTING</div>
-        <div class="nav">
-            <span id="current-time"></span>
-        </div>
+    <h1>Ứng dụng MPACCOUNTING</h1>
+    
+    <div class="debug" id="debug">
+        <strong>Trạng thái:</strong> Đang kiểm tra kết nối...
     </div>
 
-    <!-- Main Content -->
-    <div class="app-container">
-        <div id="loading" class="loading">Đang tải hệ thống quản lý...</div>
-        <div id="error" class="error" style="display: none;"></div>
-        
-        <iframe 
-            id="appsheet-iframe"
-            src=""
-            style="display: none;"
-            sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
-            allowfullscreen
-        ></iframe>
-        
-        <button id="refresh-btn" class="btn-refresh" style="display: none;">Tải lại ứng dụng</button>
-    </div>
+    <iframe
+        id="appframe"
+        src="about:blank"
+        sandbox="allow-same-origin allow-scripts allow-forms"
+    ></iframe>
 
-    <!-- Script xử lý -->
     <script>
         // Cấu hình ứng dụng
         const APP_ID = "6e025c4f-b9c5-4c91-8f97-79db941ad9d5";
         const ACCESS_KEY = "V2-VU2EE-RjTVv-puNYC-F2wmU-RjWkO-zNpZF-Fv0Ck-saDJz";
         
-        // Các phần tử DOM
-        const iframe = document.getElementById('appsheet-iframe');
-        const loadingEl = document.getElementById('loading');
-        const errorEl = document.getElementById('error');
-        const refreshBtn = document.getElementById('refresh-btn');
-        const timeEl = document.getElementById('current-time');
+        // Element
+        const debugEl = document.getElementById('debug');
+        const iframe = document.getElementById('appframe');
         
-        // URL nhúng AppSheet với các tham số tối ưu
-        const embedUrl = `https://www.appsheet.com/embed/${APP_ID}?` +
-            `applicationAccessKey=${ACCESS_KEY}` +
-            `&embedded=true` +
-            `&skipLogin=true` +
-            `&hideToolbar=true` +
-            `&simpleNav=true` +
-            `&noChrome=true`;
+        // URL nhúng tối ưu
+        const embedUrl = new URL(`https://www.appsheet.com/embed/${APP_ID}`);
+        embedUrl.searchParams.append('applicationAccessKey', ACCESS_KEY);
+        embedUrl.searchParams.append('embedded', 'true');
+        embedUrl.searchParams.append('skipLogin', 'true');
+        embedUrl.searchParams.append('noCache', Date.now()); // Tránh cache
         
-        // Hiển thị thời gian thực
-        function updateTime() {
-            const now = new Date();
-            timeEl.textContent = now.toLocaleString('vi-VN', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        }
-        
-        // Xử lý tải iframe
-        function loadAppSheet() {
-            loadingEl.style.display = 'block';
-            errorEl.style.display = 'none';
-            iframe.style.display = 'none';
-            refreshBtn.style.display = 'none';
-            
-            iframe.src = embedUrl;
-            
-            // Kiểm tra sau 15s nếu iframe không tải được
-            const timeout = setTimeout(() => {
-                if (loadingEl.style.display !== 'none') {
-                    loadingEl.style.display = 'none';
-                    errorEl.style.display = 'block';
-                    errorEl.innerHTML = `
-                        Ứng dụng tải quá lâu. Vui lòng:<br>
-                        1. Kiểm tra kết nối internet<br>
-                        2. <a href="${embedUrl}" target="_blank">Nhấn vào đây</a> để mở trực tiếp<br>
-                        3. Liên hệ quản trị hệ thống
-                    `;
-                    refreshBtn.style.display = 'block';
+        // Kiểm tra kết nối API trước
+        async function verifyAccess() {
+            try {
+                const apiUrl = `https://api.appsheet.com/api/v2/apps/${APP_ID}/tables?applicationAccessKey=${ACCESS_KEY}`;
+                const response = await fetch(apiUrl);
+                
+                if (!response.ok) {
+                    throw new Error(`Lỗi HTTP: ${response.status}`);
                 }
-            }, 15000);
-            
-            iframe.onload = function() {
-                clearTimeout(timeout);
-                loadingEl.style.display = 'none';
-                iframe.style.display = 'block';
-            };
-            
-            iframe.onerror = function() {
-                clearTimeout(timeout);
-                loadingEl.style.display = 'none';
-                errorEl.style.display = 'block';
-                errorEl.textContent = 'Lỗi khi tải ứng dụng. Vui lòng thử lại sau.';
-                refreshBtn.style.display = 'block';
-            };
+                
+                debugEl.innerHTML = `✅ <strong>Kết nối API thành công</strong><br>
+                    Đang tải ứng dụng...`;
+                
+                // Nếu API hoạt động -> tải iframe
+                iframe.src = embedUrl.toString();
+                
+            } catch (error) {
+                debugEl.innerHTML = `❌ <strong>Không thể kết nối đến AppSheet</strong><br>
+                    Lỗi: ${error.message}<br><br>
+                    <strong>Nguyên nhân có thể là:</strong><br>
+                    1. Application Access Key không đúng<br>
+                    2. Ứng dụng chưa được publish<br>
+                    3. Tài khoản chưa nâng cấp gói Core/Enterprise`;
+            }
         }
         
-        // Sự kiện nút refresh
-        refreshBtn.addEventListener('click', loadAppSheet);
+        // Sự kiện iframe
+        iframe.onload = () => {
+            debugEl.innerHTML += `<br>✅ Iframe đã tải xong`;
+        };
         
-        // Khởi động
-        updateTime();
-        setInterval(updateTime, 60000); // Cập nhật thời gian mỗi phút
-        loadAppSheet();
+        iframe.onerror = () => {
+            debugEl.innerHTML += `<br>❌ Iframe tải thất bại`;
+        };
+        
+        // Bắt đầu kiểm tra
+        verifyAccess();
     </script>
 </body>
 </html>
