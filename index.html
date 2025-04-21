@@ -3,69 +3,168 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ thống kế toán MPACCOUNTING</title>
+    <title>Hệ thống quản lý MPACCOUNTING</title>
     <style>
         body {
             margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f5f5f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8f9fa;
         }
         .header {
-            background: #2c3e50;
+            background: linear-gradient(135deg, #2c3e50, #3498db);
             color: white;
-            padding: 15px 20px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         .logo {
-            font-weight: bold;
-            font-size: 1.5em;
+            font-weight: 700;
+            font-size: 1.5rem;
         }
-        #appsheet-container {
+        .app-container {
+            margin: 2rem auto;
+            max-width: 1200px;
+            padding: 0 1rem;
+        }
+        #appsheet-iframe {
             width: 100%;
-            height: calc(100vh - 60px);
-            border: none;
+            height: 75vh;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
             background: white;
         }
         .loading {
             text-align: center;
-            padding: 50px;
-            font-size: 1.2em;
-            color: #666;
+            padding: 2rem;
+            font-size: 1.1rem;
+            color: #6c757d;
+        }
+        .error {
+            color: #dc3545;
+            text-align: center;
+            padding: 2rem;
+        }
+        .btn-refresh {
+            display: block;
+            margin: 1rem auto;
+            padding: 0.5rem 1rem;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
     <!-- Header -->
     <div class="header">
-        <div class="logo">MPACCOUNTING - Hệ thống kế toán</div>
+        <div class="logo">MPACCOUNTING</div>
+        <div class="nav">
+            <span id="current-time"></span>
+        </div>
     </div>
 
-    <!-- AppSheet Container -->
-    <div id="loading" class="loading">Đang tải ứng dụng...</div>
-    <iframe 
-        id="appsheet-container"
-        src="https://www.appsheet.com/embed/6e025c4f-b9c5-4c91-8f97-79db941ad9d5?platform=desktop&embedded=true&skipLogin=true&hideToolbar=true"
-        style="display: none;"
-        sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
-        allowfullscreen
-    ></iframe>
+    <!-- Main Content -->
+    <div class="app-container">
+        <div id="loading" class="loading">Đang tải hệ thống quản lý...</div>
+        <div id="error" class="error" style="display: none;"></div>
+        
+        <iframe 
+            id="appsheet-iframe"
+            src=""
+            style="display: none;"
+            sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+            allowfullscreen
+        ></iframe>
+        
+        <button id="refresh-btn" class="btn-refresh" style="display: none;">Tải lại ứng dụng</button>
+    </div>
 
-    <!-- Script xử lý tải trang -->
+    <!-- Script xử lý -->
     <script>
-        const iframe = document.getElementById('appsheet-container');
-        const loading = document.getElementById('loading');
+        // Cấu hình ứng dụng
+        const APP_ID = "6e025c4f-b9c5-4c91-8f97-79db941ad9d5";
+        const ACCESS_KEY = "V2-VU2EE-RjTVv-puNYC-F2wmU-RjWkO-zNpZF-Fv0Ck-saDJz";
         
-        iframe.onload = function() {
-            loading.style.display = 'none';
-            iframe.style.display = 'block';
-        };
+        // Các phần tử DOM
+        const iframe = document.getElementById('appsheet-iframe');
+        const loadingEl = document.getElementById('loading');
+        const errorEl = document.getElementById('error');
+        const refreshBtn = document.getElementById('refresh-btn');
+        const timeEl = document.getElementById('current-time');
         
-        // Dự phòng nếu iframe không tải được sau 10s
-        setTimeout(function() {
-            if (loading.style.display !== 'none') {
-                loading.innerHTML = 'Không thể tải ứng dụng. Vui lòng <a href="https://www.appsheet.com/start/6e025c4f-b9c5-4c91-8f97-79db941ad9d5" target="_blank">nhấn vào đây</a> để mở trực tiếp.';
-            }
-        }, 10000);
+        // URL nhúng AppSheet với các tham số tối ưu
+        const embedUrl = `https://www.appsheet.com/embed/${APP_ID}?` +
+            `applicationAccessKey=${ACCESS_KEY}` +
+            `&embedded=true` +
+            `&skipLogin=true` +
+            `&hideToolbar=true` +
+            `&simpleNav=true` +
+            `&noChrome=true`;
+        
+        // Hiển thị thời gian thực
+        function updateTime() {
+            const now = new Date();
+            timeEl.textContent = now.toLocaleString('vi-VN', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+        
+        // Xử lý tải iframe
+        function loadAppSheet() {
+            loadingEl.style.display = 'block';
+            errorEl.style.display = 'none';
+            iframe.style.display = 'none';
+            refreshBtn.style.display = 'none';
+            
+            iframe.src = embedUrl;
+            
+            // Kiểm tra sau 15s nếu iframe không tải được
+            const timeout = setTimeout(() => {
+                if (loadingEl.style.display !== 'none') {
+                    loadingEl.style.display = 'none';
+                    errorEl.style.display = 'block';
+                    errorEl.innerHTML = `
+                        Ứng dụng tải quá lâu. Vui lòng:<br>
+                        1. Kiểm tra kết nối internet<br>
+                        2. <a href="${embedUrl}" target="_blank">Nhấn vào đây</a> để mở trực tiếp<br>
+                        3. Liên hệ quản trị hệ thống
+                    `;
+                    refreshBtn.style.display = 'block';
+                }
+            }, 15000);
+            
+            iframe.onload = function() {
+                clearTimeout(timeout);
+                loadingEl.style.display = 'none';
+                iframe.style.display = 'block';
+            };
+            
+            iframe.onerror = function() {
+                clearTimeout(timeout);
+                loadingEl.style.display = 'none';
+                errorEl.style.display = 'block';
+                errorEl.textContent = 'Lỗi khi tải ứng dụng. Vui lòng thử lại sau.';
+                refreshBtn.style.display = 'block';
+            };
+        }
+        
+        // Sự kiện nút refresh
+        refreshBtn.addEventListener('click', loadAppSheet);
+        
+        // Khởi động
+        updateTime();
+        setInterval(updateTime, 60000); // Cập nhật thời gian mỗi phút
+        loadAppSheet();
     </script>
 </body>
 </html>
