@@ -3,36 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản lý kho - Công ty ABC</title>
+    <title>Hệ thống kế toán MPACCOUNTING</title>
     <style>
         body {
             margin: 0;
             font-family: Arial, sans-serif;
+            background: #f5f5f5;
         }
         .header {
-            background-color: #2c3e50;
+            background: #2c3e50;
             color: white;
-            padding: 15px;
-            text-align: center;
+            padding: 15px 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
-        #appsheet-embed {
+        .logo {
+            font-weight: bold;
+            font-size: 1.5em;
+        }
+        #appsheet-container {
             width: 100%;
-            height: calc(100vh - 60px); /* Trừ chiều cao header */
+            height: calc(100vh - 60px);
             border: none;
+            background: white;
+        }
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 1.2em;
+            color: #666;
         }
     </style>
 </head>
 <body>
     <!-- Header -->
     <div class="header">
-        <h1>CÔNG TY ABC - QUẢN LÝ KHO HÀNG</h1>
+        <div class="logo">MPACCOUNTING - Hệ thống kế toán</div>
     </div>
 
-    <!-- Nhúng AppSheet -->
+    <!-- AppSheet Container -->
+    <div id="loading" class="loading">Đang tải ứng dụng...</div>
     <iframe 
-        id="appsheet-embed"
-        src="https://www.appsheet.com/embed/6e025c4f-b9c5-4c91-8f97-79db941ad9d5?embedded=true" 
+        id="appsheet-container"
+        src="https://www.appsheet.com/embed/6e025c4f-b9c5-4c91-8f97-79db941ad9d5?platform=desktop&embedded=true&skipLogin=true&hideToolbar=true"
+        style="display: none;"
+        sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
         allowfullscreen
     ></iframe>
+
+    <!-- Script xử lý tải trang -->
+    <script>
+        const iframe = document.getElementById('appsheet-container');
+        const loading = document.getElementById('loading');
+        
+        iframe.onload = function() {
+            loading.style.display = 'none';
+            iframe.style.display = 'block';
+        };
+        
+        // Dự phòng nếu iframe không tải được sau 10s
+        setTimeout(function() {
+            if (loading.style.display !== 'none') {
+                loading.innerHTML = 'Không thể tải ứng dụng. Vui lòng <a href="https://www.appsheet.com/start/6e025c4f-b9c5-4c91-8f97-79db941ad9d5" target="_blank">nhấn vào đây</a> để mở trực tiếp.';
+            }
+        }, 10000);
+    </script>
 </body>
 </html>
