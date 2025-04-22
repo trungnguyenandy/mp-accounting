@@ -1,97 +1,54 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>MPACCOUNTING - Embedded App</title>
+    <title>Nhúng AppSheet MPACCOUNTING</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body {
-            font-family: Arial, sans-serif;
             margin: 0;
-            padding: 20px;
+            font-family: Arial, sans-serif;
             background: #f5f5f5;
         }
-        .debug {
-            background: white;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            border: 1px solid #ddd;
-        }
-        #appframe {
+        .container {
+            position: relative;
             width: 100%;
-            height: 80vh;
-            border: 1px solid #3498db;
-            border-radius: 5px;
-            background: white;
+            height: 100vh;
+            overflow: hidden;
+        }
+        #appsheet-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .debug {
+            padding: 15px;
+            background: #fff;
+            border-bottom: 1px solid #ddd;
         }
     </style>
 </head>
 <body>
-    <h1>Ứng dụng MPACCOUNTING</h1>
+    <div class="debug">
+        <strong>Trạng thái:</strong> Đang tải ứng dụng MPACCOUNTING...
+    </div>
     
-    <div class="debug" id="debug">
-        <strong>Trạng thái:</strong> Đang kiểm tra kết nối...
+    <div class="container">
+        <!-- Sử dụng URL /start thay vì /embed -->
+        <iframe
+            id="appsheet-iframe"
+            src="https://www.appsheet.com/start/6e025c4f-b9c5-4c91-8f97-79db941ad9d5?applicationAccessKey=V2-VU2EE-RjTVv-puNYC-F2wmU-RjWkO-zNpZF-Fv0Ck-saDJz&platform=desktop&refresh=1&wipe=1&noCache=123"
+            sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+        ></iframe>
     </div>
 
-    <iframe
-        id="appframe"
-        src="about:blank"
-        sandbox="allow-same-origin allow-scripts allow-forms"
-    ></iframe>
-
     <script>
-        // Cấu hình ứng dụng
-        const APP_ID = "6e025c4f-b9c5-4c91-8f97-79db941ad9d5";
-        const ACCESS_KEY = "V2-VU2EE-RjTVv-puNYC-F2wmU-RjWkO-zNpZF-Fv0Ck-saDJz";
-        
-        // Element
-        const debugEl = document.getElementById('debug');
-        const iframe = document.getElementById('appframe');
-        
-        // URL nhúng tối ưu
-        const embedUrl = new URL(`https://www.appsheet.com/embed/${APP_ID}`);
-        embedUrl.searchParams.append('applicationAccessKey', ACCESS_KEY);
-        embedUrl.searchParams.append('embedded', 'true');
-        embedUrl.searchParams.append('skipLogin', 'true');
-        embedUrl.searchParams.append('noCache', Date.now()); // Tránh cache
-        
-        // Kiểm tra kết nối API trước
-        async function verifyAccess() {
-            try {
-                const apiUrl = `https://api.appsheet.com/api/v2/apps/${APP_ID}/tables?applicationAccessKey=${ACCESS_KEY}`;
-                const response = await fetch(apiUrl);
-                
-                if (!response.ok) {
-                    throw new Error(`Lỗi HTTP: ${response.status}`);
-                }
-                
-                debugEl.innerHTML = `✅ <strong>Kết nối API thành công</strong><br>
-                    Đang tải ứng dụng...`;
-                
-                // Nếu API hoạt động -> tải iframe
-                iframe.src = embedUrl.toString();
-                
-            } catch (error) {
-                debugEl.innerHTML = `❌ <strong>Không thể kết nối đến AppSheet</strong><br>
-                    Lỗi: ${error.message}<br><br>
-                    <strong>Nguyên nhân có thể là:</strong><br>
-                    1. Application Access Key không đúng<br>
-                    2. Ứng dụng chưa được publish<br>
-                    3. Tài khoản chưa nâng cấp gói Core/Enterprise`;
-            }
-        }
-        
-        // Sự kiện iframe
-        iframe.onload = () => {
-            debugEl.innerHTML += `<br>✅ Iframe đã tải xong`;
+        // Kiểm tra lỗi tải iframe
+        document.getElementById('appsheet-iframe').onerror = function() {
+            document.querySelector('.debug').innerHTML = 
+                '❌ Không thể tải ứng dụng. Vui lòng: ' +
+                '<a href="https://www.appsheet.com/start/6e025c4f-b9c5-4c91-8f97-79db941ad9d5" target="_blank">' +
+                'Nhấn vào đây để mở trực tiếp</a>';
         };
-        
-        iframe.onerror = () => {
-            debugEl.innerHTML += `<br>❌ Iframe tải thất bại`;
-        };
-        
-        // Bắt đầu kiểm tra
-        verifyAccess();
     </script>
 </body>
 </html>
