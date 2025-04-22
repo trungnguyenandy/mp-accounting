@@ -1,54 +1,58 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Nhúng AppSheet MPACCOUNTING</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MPACCOUNTING - Secure Embed</title>
     <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f5f5f5;
-        }
-        .container {
-            position: relative;
+        #app-container {
             width: 100%;
             height: 100vh;
-            overflow: hidden;
-        }
-        #appsheet-iframe {
-            width: 100%;
-            height: 100%;
             border: none;
         }
-        .debug {
-            padding: 15px;
-            background: #fff;
-            border-bottom: 1px solid #ddd;
+        .fallback {
+            padding: 20px;
+            text-align: center;
         }
     </style>
 </head>
 <body>
-    <div class="debug">
-        <strong>Trạng thái:</strong> Đang tải ứng dụng MPACCOUNTING...
-    </div>
-    
-    <div class="container">
-        <!-- Sử dụng URL /start thay vì /embed -->
-        <iframe
-            id="appsheet-iframe"
-            src="https://www.appsheet.com/start/6e025c4f-b9c5-4c91-8f97-79db941ad9d5?applicationAccessKey=V2-VU2EE-RjTVv-puNYC-F2wmU-RjWkO-zNpZF-Fv0Ck-saDJz&platform=desktop&refresh=1&wipe=1&noCache=123"
-            sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
-        ></iframe>
+    <!-- Phương án dự phòng nếu iframe bị chặn -->
+    <div id="fallback" class="fallback" style="display: none;">
+        <h3>Ứng dụng yêu cầu xác thực</h3>
+        <a id="direct-link" href="#" target="_blank" style="
+            background: #4285F4;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+        ">Mở ứng dụng trong tab mới</a>
     </div>
 
+    <!-- Sử dụng /start thay vì /embed -->
+    <iframe 
+        id="app-container"
+        src="https://www.appsheet.com/start/6e025c4f-b9c5-4c91-8f97-79db941ad9d5?applicationAccessKey=V2-VU2EE-RjTVv-puNYC-F2wmU-RjWkO-zNpZF-Fv0Ck-saDJz&platform=desktop&noCache=123"
+        sandbox="allow-same-origin allow-scripts allow-forms"
+        allow="fullscreen"
+    ></iframe>
+
     <script>
-        // Kiểm tra lỗi tải iframe
-        document.getElementById('appsheet-iframe').onerror = function() {
-            document.querySelector('.debug').innerHTML = 
-                '❌ Không thể tải ứng dụng. Vui lòng: ' +
-                '<a href="https://www.appsheet.com/start/6e025c4f-b9c5-4c91-8f97-79db941ad9d5" target="_blank">' +
-                'Nhấn vào đây để mở trực tiếp</a>';
-        };
+        // Xử lý khi iframe bị chặn
+        const iframe = document.getElementById('app-container');
+        const fallback = document.getElementById('fallback');
+        const directLink = document.getElementById('direct-link');
+        
+        // URL dự phòng
+        const appUrl = iframe.src;
+        directLink.href = appUrl;
+
+        // Kiểm tra sau 3 giây
+        setTimeout(() => {
+            if (!iframe.contentWindow || 
+                iframe.contentWindow.location.href === 'about:blank') {
+                iframe.style.display = 'none';
+                fallback.style.display = 'block';
+            }
+        }, 3000);
     </script>
 </body>
 </html>
